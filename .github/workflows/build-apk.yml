@@ -67,10 +67,29 @@ jobs:
           done
           ls -la "$DESTINO"
       
-      - name: Compilar o APK
+            - name: Compilar o APK
         run: |
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
-          buildozer -v android debug
+          set -o pipefail
+          buildozer -v android debug 2>&1 | tee /tmp/build.log
+
+      - name: Resumo do erro
+        if: failure()
+        run: |
+          {
+            echo "## Onde parou"
+            echo ""
+            echo '```'
+            grep -aE "Downloading .+ from |Building |ERROR|error:|fatal error|Traceback|HTTPError|Command failed|Error code" \
+              /tmp/build.log | tail -40
+            echo '```'
+            echo ""
+            echo "## Ultimas 60 linhas"
+            echo ""
+            echo '```'
+            tail -60 /tmp/build.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publicar o APK
         uses: actions/upload-artifact@v4
