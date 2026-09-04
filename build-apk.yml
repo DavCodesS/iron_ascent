@@ -1,0 +1,56 @@
+name: Gerar APK
+
+# Roda a cada push e tambem pelo botao "Run workflow" na aba Actions.
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar o Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip openjdk-17-jdk autoconf libtool pkg-config \
+            zlib1g-dev libncurses-dev libffi-dev libssl-dev cmake \
+            libcairo2-dev ccache
+
+      - name: Instalar o Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer cython
+
+      # Guarda o Android SDK e NDK entre execucoes.
+      # A primeira compilacao demora; as seguintes ficam bem mais rapidas.
+      - name: Reaproveitar downloads anteriores
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            ~/.gradle
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-
+
+      - name: Compilar o APK
+        run: |
+          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+          buildozer -v android debug
+
+      - name: Publicar o APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: iron-ascent-apk
+          path: bin/*.apk
+          if-no-files-found: error
