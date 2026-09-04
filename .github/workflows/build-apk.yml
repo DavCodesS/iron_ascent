@@ -40,6 +40,33 @@ jobs:
           key: buildozer-${{ hashFiles('buildozer.spec') }}
           restore-keys: buildozer-
 
+            # O freetype e hospedado no Savannah (GNU), que vive fora do ar.
+      # Baixamos de um espelho e deixamos no cache do python-for-android,
+      # que entao pula o download e nao depende do servidor problematico.
+      - name: Pre-baixar o freetype de um espelho
+        run: |
+          git clone --depth 1 https://github.com/kivy/python-for-android /tmp/p4a
+          VERSAO=$(grep -oP "version\s*=\s*['\"]\K[0-9.]+" \
+            /tmp/p4a/pythonforandroid/recipes/freetype/__init__.py | head -1)
+          echo "freetype versao $VERSAO"
+
+          DESTINO="$GITHUB_WORKSPACE/.buildozer/android/platform/build-arm64-v8a/packages/freetype"
+          mkdir -p "$DESTINO"
+
+          for URL in \
+            "https://downloads.sourceforge.net/project/freetype/freetype2/$VERSAO/freetype-$VERSAO.tar.gz" \
+            "https://download.savannah.gnu.org/releases/freetype/freetype-$VERSAO.tar.gz"
+          do
+            echo "tentando $URL"
+            if curl -fL --retry 3 --retry-delay 5 --max-time 300 \
+                 -o "$DESTINO/freetype-$VERSAO.tar.gz" "$URL"; then
+              touch "$DESTINO/.mark-freetype-$VERSAO.tar.gz"
+              echo "baixado com sucesso"
+              break
+            fi
+          done
+          ls -la "$DESTINO"
+      
       - name: Compilar o APK
         run: |
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
