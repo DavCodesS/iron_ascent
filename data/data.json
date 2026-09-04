@@ -1,0 +1,41 @@
+{
+  "body_parts": {
+    "peito": {
+      "xp": 0,
+      "exercicios_concluidos": 0,
+      "treinos_completos": 0
+    },
+    "costas": {
+      "xp": 0,
+      "exercicios_concluidos": 0,
+      "treinos_completos": 0
+    },
+    "pernas": {
+      "xp": 0,
+      "exercicios_concluidos": 0,
+      "treinos_completos": 0
+    },
+    "ombros": {
+      "xp": 0,
+      "exercicios_concluidos": 0,
+      "treinos_completos": 0
+    },
+    "biceps": {
+      "xp": 0,
+      "exercicios_concluidos": 0,
+      "treinos_completos": 0
+    },
+    "triceps": {
+      "xp": 0,
+      "exercicios_concluidos": 0,
+      "treinos_completos": 0
+    },
+    "abdomen": {
+      "xp": 0,
+      "exercicios_concluidos": 0,
+      "treinos_completos": 0
+    }
+  },
+  "treinos": [],
+  "historico": []
+}
