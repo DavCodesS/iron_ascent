@@ -42,26 +42,50 @@ jobs:
 
       - name: Pre-baixar o freetype de um espelho
         run: |
-          git clone --depth 1 https://github.com/kivy/python-for-android /tmp/p4a
-          VERSAO=$(grep -oP "version\s*=\s*['\"]\K[0-9.]+" \
-            /tmp/p4a/pythonforandroid/recipes/freetype/__init__.py | head -1)
-          echo "freetype versao $VERSAO"
+          set -euo pipefail
+          git clone --depth 1 -q https://github.com/kivy/python-for-android /tmp/p4a
+
+          VERSAO=$(python3 -c "
+          import re
+          src = open('/tmp/p4a/pythonforandroid/recipes/freetype/__init__.py').read()
+          print(re.search(r'version\s*=\s*.([0-9.]+).', src).group(1))
+          ")
+          echo "::notice::freetype versao $VERSAO"
 
           DESTINO="$GITHUB_WORKSPACE/.buildozer/android/platform/build-arm64-v8a/packages/freetype"
+          ARQUIVO="$DESTINO/freetype-$VERSAO.tar.gz"
           mkdir -p "$DESTINO"
 
+          OK=0
           for URL in \
-            "https://downloads.sourceforge.net/project/freetype/freetype2/$VERSAO/freetype-$VERSAO.tar.gz" \
+            "https://downloads.sourceforge.net/project/freetype/freetype2/$VERSAO/freetype-$VERSAO.tar.gz?use_mirror=autoselect" \
+            "https://ftp.osuosl.org/pub/blfs/conglomeration/freetype2/freetype-$VERSAO.tar.gz" \
+            "https://distfiles.macports.org/freetype/freetype-$VERSAO.tar.gz" \
             "https://download.savannah.gnu.org/releases/freetype/freetype-$VERSAO.tar.gz"
           do
-            echo "tentando $URL"
-            if curl -fL --retry 3 --retry-delay 5 --max-time 300 \
-                 -o "$DESTINO/freetype-$VERSAO.tar.gz" "$URL"; then
-              touch "$DESTINO/.mark-freetype-$VERSAO.tar.gz"
-              echo "baixado com sucesso"
-              break
+            echo "--- tentando $URL"
+            rm -f "$ARQUIVO"
+            if ! curl -fL --retry 3 --retry-delay 5 --max-time 300 -o "$ARQUIVO" "$URL"; then
+              echo "    download falhou"
+              continue
             fi
+            if ! tar -tzf "$ARQUIVO" > /dev/null 2>&1; then
+              echo "    arquivo invalido, nao abre como tar.gz"
+              rm -f "$ARQUIVO"
+              continue
+            fi
+            echo "    OK: $(du -h "$ARQUIVO" | cut -f1)"
+            sha256sum "$ARQUIVO"
+            OK=1
+            break
           done
+
+          if [ "$OK" != "1" ]; then
+            echo "::error::Nenhum espelho do freetype respondeu"
+            exit 1
+          fi
+
+          touch "$DESTINO/.mark-freetype-$VERSAO.tar.gz"
           ls -la "$DESTINO"
 
       - name: Compilar o APK
@@ -71,7 +95,7 @@ jobs:
           buildozer -v android debug 2>&1 | tee /tmp/build.log
 
       - name: Resumo do erro
-        if: failure()
+        if: always()
         run: |
           {
             echo "## Onde parou"
