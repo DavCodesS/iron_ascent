@@ -38,6 +38,7 @@ android.presplash_color = #0B0D10
 # entao nao pede nenhuma permissao.
 android.permissions =
 
+android.accept_sdk_license = True
 android.api = 34
 android.minapi = 24
 android.archs = arm64-v8a
