@@ -18,13 +18,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Instalar dependencias do sistema
+            - name: Instalar dependencias do sistema
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git zip unzip openjdk-17-jdk autoconf libtool pkg-config \
-            zlib1g-dev libncurses-dev libffi-dev libssl-dev cmake \
-            libcairo2-dev ccache
+            git zip unzip openjdk-17-jdk pkg-config cmake ccache patch \
+            build-essential autoconf automake libtool libtool-bin libltdl-dev \
+            zlib1g-dev libncurses-dev libffi-dev libssl-dev libcairo2-dev
 
       - name: Instalar o Buildozer
         run: |
