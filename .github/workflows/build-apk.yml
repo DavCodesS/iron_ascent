@@ -40,9 +40,6 @@ jobs:
           key: buildozer-${{ hashFiles('buildozer.spec') }}
           restore-keys: buildozer-
 
-            # O freetype e hospedado no Savannah (GNU), que vive fora do ar.
-      # Baixamos de um espelho e deixamos no cache do python-for-android,
-      # que entao pula o download e nao depende do servidor problematico.
       - name: Pre-baixar o freetype de um espelho
         run: |
           git clone --depth 1 https://github.com/kivy/python-for-android /tmp/p4a
@@ -66,8 +63,8 @@ jobs:
             fi
           done
           ls -la "$DESTINO"
-      
-            - name: Compilar o APK
+
+      - name: Compilar o APK
         run: |
           export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
           set -o pipefail
